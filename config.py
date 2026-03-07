@@ -22,29 +22,41 @@ OPEN_ALEX_KEY = os.getenv("OPEN_ALEX_KEY", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 SUPABASE_PW = os.getenv("SUPABASE_PW", "")
+EMAIL = os.getenv("EMAIL", "")
 
 SEARCH_TERMS = [
     # POWER — nuclear baseload and grid
-    '"small modular reactor" "deployment"',
-    '"nuclear microreactor" "military"',
-    '"grid modernization" "resilience"',
-    '"baseload energy" "decentralized"',
+    ["small modular reactor", "deployment"],
+    ["nuclear microreactor", "military"],
+    ["grid modernization", "resilience"],
+    ["baseload energy", "decentralized"],
 
     # PROTECTION — autonomous and unmanned defense
-    '"unmanned systems" "defense"',
-    '"autonomous defense" "deployment"',
-    '"defense industrial base"',
+    ["unmanned systems", "defense"],
+    ["autonomous defense", "deployment"],
+    ["defense industrial base"],
 
     # PRODUCTIVITY — AI applied to physical economy
-    '"AI" "manufacturing" "automation"',
-    '"logistics" "autonomous" "military"',
-    '"physical economy" "digitization"',
+    ["AI", "manufacturing", "automation"],
+    ["logistics", "autonomous", "military"],
+    ["physical economy", "digitization"],
 ]
 
 RESULTS_PER_SEARCH = 10
 DAYS_BACK = 7
-EMAIL = "samayms@umich.edu"
-PROMPT = """You are an investment analyst for Reveille VC, an early-stage venture capital fund focused on three areas:
+NSF_DAYS_BACK = 30
+OPEN_ALEX_DAYS_BACK = DAYS_BACK
+BIG_QUERY_DAYS_BACK = DAYS_BACK
+
+NSF_FILTER_KEYWORDS = [
+    # POWER
+    "nuclear", "reactor", "microreactor", "grid", "baseload", "smr",
+    # PROTECTION
+    "defense", "autonomous", "unmanned", "drone", "directed energy", "counter-drone",
+    # PRODUCTIVITY
+    "manufacturing", "automation", "logistics", "robotics", "supply chain",
+]
+OPEN_ALEX_PROMPT = """You are an investment analyst for Reveille VC, an early-stage venture capital fund focused on three areas:
 
 POWER: Nuclear energy, small modular reactors, grid modernization, baseload energy, decentralized energy infrastructure
 PROTECTION: Autonomous and unmanned defense systems, defense industrial base, counter-drone, directed energy weapons
@@ -55,12 +67,34 @@ You are evaluating a research paper to determine if it represents an emerging te
 Paper Title: {title}
 Authors: {authors}
 Institutions: {institutions}
-Topics: {topics}
+Keywords: {keywords}
+Funding: {funding_source}
 Abstract: {abstract}
 
 Respond with ONLY a JSON object in this exact format, no other text:
 {{
     "relevance_score": <integer 1-10>,
     "why_this_matters": "<2-3 sentences explaining why this is or isn't relevant to Reveille's thesis>"
+}}
+"""
+
+NSF_PROMPT = """You are an investment analyst for Reveille VC, an early-stage venture capital fund focused on three areas:
+
+POWER: Nuclear energy, small modular reactors, grid modernization, baseload energy, decentralized energy infrastructure
+PROTECTION: Autonomous and unmanned defense systems, defense industrial base, counter-drone, directed energy weapons
+PRODUCTIVITY: AI applied to physical economy, manufacturing automation, military logistics, supply chain optimization
+
+You are evaluating an NSF SBIR Phase I grant to determine if the company represents an early-stage investment opportunity relevant to Reveille's thesis.
+
+Company: {institutions}
+PI: {authors}
+Project Title: {title}
+Award Amount: {award_amount}
+Abstract: {abstract}
+
+Respond with ONLY a JSON object in this exact format, no other text:
+{{
+    "relevance_score": <integer 1-10>,
+    "why_this_matters": "<2-3 sentences explaining why this company is or isn't relevant to Reveille's thesis>"
 }}
 """

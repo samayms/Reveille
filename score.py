@@ -1,17 +1,29 @@
 import anthropic
 import json
-from config import ANTHROPIC_API_KEY, PROMPT
+from config import ANTHROPIC_API_KEY, OPEN_ALEX_PROMPT, NSF_PROMPT
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-def score_paper(paper):
-    prompt = PROMPT.format(
-        title=paper.get("title", "") or "",
-        authors=paper.get("authors", "") or "",
-        institutions=paper.get("institutions", "") or "",
-        topics=paper.get("topics", "") or "",
-        abstract=paper.get("abstract", "") or "",
-    )
+def score_item(item):
+    source = item.get("source")
+
+    if source == "NSF":
+        prompt = NSF_PROMPT.format(
+            title=item.get("title", "") or "",
+            authors=item.get("authors", "") or "",
+            institutions=item.get("institutions", "") or "",
+            award_amount=item.get("award_amount", "") or "",
+            abstract=item.get("abstract", "") or "",
+        )
+    elif source == "OpenAlex":
+        prompt = OPEN_ALEX_PROMPT.format(
+            title=item.get("title", "") or "",
+            authors=item.get("authors", "") or "",
+            institutions=item.get("institutions", "") or "",
+            keywords=item.get("keywords", "") or "",
+            funding_source=item.get("funding_source", "") or "",
+            abstract=item.get("abstract", "") or "",
+        )
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
@@ -30,27 +42,27 @@ def score_paper(paper):
 
     result = json.loads(response_text)
     return {
-        **paper,
+        **item,
         "relevance_score": result["relevance_score"],
         "why_this_matters": result["why_this_matters"]
     }
 
 
-def score_papers(papers):
-    print(f"Scoring {len(papers)} papers with Claude...")
+def score_items(items):
+    print(f"Scoring {len(items)} items with Claude...")
 
     scored = []
 
-    for i, paper in enumerate(papers):
-        print(f"  Scoring {i+1}/{len(papers)}: {paper['title'][:60]}...")
+    for i, item in enumerate(items):
+        print(f"  Scoring {i+1}/{len(items)}: {item['title'][:60]}...")
         try:
-            scored_paper = score_paper(paper)
-            scored.append(scored_paper)
+            scored_item = score_item(item)
+            scored.append(scored_item)
         except Exception as e:
-            print(f"  Error scoring paper: {e}")
+            print(f"  Error scoring item: {e}")
             continue
 
-    print(f"Successfully scored {len(scored)} papers")
+    print(f"Successfully scored {len(scored)} items")
     return scored
 
 
@@ -58,16 +70,14 @@ if __name__ == "__main__":
     from ingest import get_papers
     from filter import filter_papers
 
-    papers = get_papers()
-    filtered = filter_papers(papers)
-    scored = score_papers(filtered)
+    items = get_papers()
+    filtered = filter_papers(items)
+    scored = score_items(filtered)
 
     scored.sort(key=lambda x: x["relevance_score"], reverse=True)
 
     print(f"\n--- TOP SCORED PAPERS ---")
-    for paper in scored[:5]:
-        print(f"\nScore: {paper['relevance_score']}/10")
-        print(f"Title: {paper['title']}")
-        print(f"Why: {paper['why_this_matters']}")
-
-ThreadPoolExecutor(max_workers = 3)
+    for item in scored[:5]:
+        print(f"\nScore: {item['relevance_score']}/10")
+        print(f"Title: {item['title']}")
+        print(f"Why: {item['why_this_matters']}")
