@@ -26,7 +26,7 @@ EMAIL = os.getenv("EMAIL", "")
 
 # --- Data source toggles ---
 ENABLE_OPENALEX = True
-ENABLE_NSF_SBIR = True
+ENABLE_NSF_SBIR = True  # when sbir.gov API is restored, switch to off as is redundant
 ENABLE_SBIR_GOV = False  # sbir.gov API is currently offline; flip to True when restored
 
 SEARCH_TERMS = [
@@ -49,10 +49,12 @@ SEARCH_TERMS = [
 
 RESULTS_PER_SEARCH = 10
 DAYS_BACK = 7
-NSF_DAYS_BACK = 30
+NSF_DAYS_BACK = 180
 OPEN_ALEX_DAYS_BACK = DAYS_BACK
 BIG_QUERY_DAYS_BACK = DAYS_BACK
 SBIR_GOV_DAYS_BACK = 30
+
+NSF_PROGRAM_NAMES = ["SBIR", "STTR"]
 
 NSF_FILTER_KEYWORDS = [
     # POWER

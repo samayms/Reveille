@@ -7,6 +7,7 @@ from config import (
     OPEN_ALEX_DAYS_BACK,
     NSF_DAYS_BACK,
     NSF_FILTER_KEYWORDS,
+    NSF_PROGRAM_NAMES,
     SBIR_GOV_DAYS_BACK,
     SBIR_GOV_FILTER_KEYWORDS,
     ENABLE_OPENALEX,
@@ -127,58 +128,70 @@ def fetch_nsf_sbir_awards():
     companies = []
     seen_ids = set()
 
-    for keyword in NSF_FILTER_KEYWORDS:
-        params = {
-            "keyword": keyword,
-            "fundProgramName": "SBIR Phase I",
-            "dateStart": one_month_ago,
-            "printFields": "id,title,abstractText,awardeeName,piEmail,pdPIName,estimatedTotalAmt,startDate,awardeeCity,awardeeStateCode,expDate,awardeePhone,transType",
-            "rpp": 25
-        }
+    for program in NSF_PROGRAM_NAMES:
+        for keyword in NSF_FILTER_KEYWORDS:
+            params = {
+                "keyword": keyword,
+                "fundProgramName": program,
+                "dateStart": one_month_ago,
+                "printFields": "id,title,abstractText,awardeeName,piEmail,pdPIName,estimatedTotalAmt,startDate,awardeeCity,awardeeStateCode,expDate,awardeePhone,transType,fundProgramName",
+                "rpp": 25
+            }
 
-        response = requests.get(url, params=params)
-        data = response.json()
+            response = requests.get(url, params=params)
+            data = response.json()
 
-        awards = data.get("response", {}).get("award", [])
-        total = data.get("response", {}).get("metadata", {}).get("totalCount", 0)
-        print(f"NSF '{keyword}': {total} total grants, processing {len(awards)}")
+            awards = data.get("response", {}).get("award", [])
+            total = data.get("response", {}).get("metadata", {}).get("totalCount", 0)
+            print(f"NSF [{program}] '{keyword}': {total} total grants, processing {len(awards)}")
 
-        for award in awards:
-            award_id = f"nsf_{award.get('id')}"
+            for award in awards:
+                award_id = f"nsf_{award.get('id')}"
 
-            if award_id in seen_ids:
-                continue
-            seen_ids.add(award_id)
+                if award_id in seen_ids:
+                    continue
+                seen_ids.add(award_id)
 
-            abstract = award.get("abstractText", "") or ""
-            title = award.get("title", "") or ""
+                abstract = award.get("abstractText", "") or ""
+                title = award.get("title", "") or ""
 
-            if len(abstract.split()) < 100:
-                continue
+                if len(abstract.split()) < 100:
+                    continue
 
-            content = (title + " " + abstract).lower()
-            if not any(kw in content for kw in NSF_FILTER_KEYWORDS):
-                continue
+                content = (title + " " + abstract).lower()
+                if not any(kw in content for kw in NSF_FILTER_KEYWORDS):
+                    continue
 
-            companies.append({
-                "paper_id": award_id,
-                "title": title,
-                "authors": award.get("pdPIName", ""),
-                "institutions": award.get("awardeeName", ""),
-                "abstract": abstract,
-                "publication_date": award.get("startDate", ""),
-                "citation_count": 0,
-                "source_url": f"https://www.nsf.gov/awardsearch/showAward?AWD_ID={award.get('id')}",
-                "search_term": "NSF SBIR Phase I",
-                "source": "NSF",
-                "pi_email": award.get("piEmail", ""),
-                "award_amount": award.get("estimatedTotalAmt", ""),
-                "company_city": award.get("awardeeCity", ""),
-                "company_state": award.get("awardeeStateCode", ""),
-                "grant_expiry": award.get("expDate", ""),
-                "company_phone": award.get("awardeePhone", ""),
-                "grant_type": award.get("transType", "")
-            })
+                fn = award.get("fundProgramName", "")
+                amt = int(award.get("estimatedTotalAmt") or 0)
+                program = "STTR" if "STTR" in fn else "SBIR"
+                if "Fast-Track" in fn:
+                    grant_type = f"{program} Fast-Track"
+                elif "Phase II" in fn:
+                    grant_type = f"{program} Phase II"
+                elif "Phase I" in fn:
+                    grant_type = f"{program} Phase I"
+
+                companies.append({
+                    "paper_id": award_id,
+                    "title": title,
+                    "authors": award.get("pdPIName", ""),
+                    "institutions": award.get("awardeeName", ""),
+                    "abstract": abstract,
+                    "publication_date": award.get("startDate", ""),
+                    "citation_count": 0,
+                    "source_url": f"https://www.nsf.gov/awardsearch/showAward?AWD_ID={award.get('id')}",
+                    "search_term": f"NSF {program}",
+                    "source": "NSF",
+                    "pi_email": award.get("piEmail", ""),
+                    "award_amount": award.get("estimatedTotalAmt", ""),
+                    "company_city": award.get("awardeeCity", ""),
+                    "company_state": award.get("awardeeStateCode", ""),
+                    "grant_expiry": award.get("expDate", ""),
+                    "company_phone": award.get("awardeePhone", ""),
+                    "grant_type": grant_type,
+                    "fund_program_name": fn,
+                })
     
     print(f"Fetched {len(companies)} relevant NSF SBIR grants")
     return companies

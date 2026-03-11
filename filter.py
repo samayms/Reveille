@@ -1,3 +1,8 @@
+VALID_NSF_GRANT_TYPES = {
+    "SBIR Phase I", "SBIR Phase II", "SBIR Fast-Track",
+    "STTR Phase I", "STTR Phase II", "STTR Fast-Track",
+}
+
 def filter_papers(papers):
     print(f"Filtering {len(papers)} papers...")
 
@@ -8,6 +13,9 @@ def filter_papers(papers):
         title = paper.get("title", "") or ""
 
         if len(abstract.split()) < 100:
+            continue
+
+        if paper.get("source") == "NSF" and paper.get("grant_type") not in VALID_NSF_GRANT_TYPES:
             continue
 
         filtered.append(paper)

@@ -32,6 +32,7 @@ def upsert_leads(leads):
             "grant_expiry": lead.get("grant_expiry"),
             "company_phone": lead.get("company_phone"),
             "grant_type": lead.get("grant_type"),
+            "fund_program_name": lead.get("fund_program_name"),
             "relevance_score": lead.get("relevance_score"),
             "why_this_matters": lead.get("why_this_matters"),
         }
