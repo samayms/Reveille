@@ -46,7 +46,7 @@ def get_papers():
         data = response.json()
 
         for work in data.get("results", []):
-            paper_id = work.get("id")
+            paper_id = f"oa_{work.get('id')}"
             title = work.get("title", "") or ""
             if title in seen_titles:
                 continue
@@ -86,9 +86,8 @@ def get_papers():
 
             publication_venue = (
                 (work.get("primary_location") or {})
-                .get("source", {})
-                .get("display_name", "")
-            ) or ""
+                .get("source") or {}
+            ).get("display_name", "") or ""
 
             all_papers.append({
                 "paper_id": paper_id,
@@ -134,7 +133,7 @@ def fetch_nsf_sbir():
         print(f"NSF '{keyword}': {total} total grants, processing {len(awards)}")
 
         for award in awards:
-            award_id = f"{award.get('id')}"
+            award_id = f"nsf_{award.get('id')}"
 
             if award_id in seen_ids:
                 continue
@@ -155,7 +154,6 @@ def fetch_nsf_sbir():
                 "title": title,
                 "authors": award.get("pdPIName", ""),
                 "institutions": award.get("awardeeName", ""),
-                "topics": "NSF SBIR Phase I",
                 "abstract": abstract,
                 "publication_date": award.get("startDate", ""),
                 "citation_count": 0,
