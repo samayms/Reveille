@@ -1,6 +1,6 @@
 import anthropic
 import json
-from config import ANTHROPIC_API_KEY, OPEN_ALEX_PROMPT, NSF_PROMPT
+from config import ANTHROPIC_API_KEY, OPEN_ALEX_PROMPT, NSF_PROMPT, SBIR_GOV_PROMPT
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -12,6 +12,16 @@ def score_item(item):
             title=item.get("title", "") or "",
             authors=item.get("authors", "") or "",
             institutions=item.get("institutions", "") or "",
+            award_amount=item.get("award_amount", "") or "",
+            abstract=item.get("abstract", "") or "",
+        )
+    elif source == "SBIR.gov":
+        prompt = SBIR_GOV_PROMPT.format(
+            title=item.get("title", "") or "",
+            authors=item.get("authors", "") or "",
+            institutions=item.get("institutions", "") or "",
+            agency=item.get("agency", "") or "",
+            phase=item.get("phase", "") or "",
             award_amount=item.get("award_amount", "") or "",
             abstract=item.get("abstract", "") or "",
         )
@@ -67,10 +77,10 @@ def score_items(items):
 
 
 if __name__ == "__main__":
-    from ingest import get_papers
+    from ingest import fetch_openalex_papers
     from filter import filter_papers
 
-    items = get_papers()
+    items = fetch_openalex_papers()
     filtered = filter_papers(items)
     scored = score_items(filtered)
 

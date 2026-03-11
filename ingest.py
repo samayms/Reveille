@@ -7,10 +7,15 @@ from config import (
     OPEN_ALEX_DAYS_BACK,
     NSF_DAYS_BACK,
     NSF_FILTER_KEYWORDS,
+    SBIR_GOV_DAYS_BACK,
+    SBIR_GOV_FILTER_KEYWORDS,
+    ENABLE_OPENALEX,
+    ENABLE_NSF_SBIR,
+    ENABLE_SBIR_GOV,
     EMAIL,
 )
 
-def find_abstract(inverted_index):
+def decode_openalex_abstract(inverted_index):
     if not inverted_index:
         return None
     max_position = max(
@@ -24,7 +29,10 @@ def find_abstract(inverted_index):
             words[pos] = word
     return " ".join(words)
 
-def get_papers():
+def fetch_openalex_papers():
+    if not ENABLE_OPENALEX:
+        print("OpenAlex: disabled (ENABLE_OPENALEX=False)")
+        return []
     print("Fetching papers from OpenAlex...")
 
     one_week_ago = (datetime.now() - timedelta(days=OPEN_ALEX_DAYS_BACK)).strftime("%Y-%m-%d")
@@ -51,7 +59,7 @@ def get_papers():
             if title in seen_titles:
                 continue
             seen_titles.add(title)
-            abstract = find_abstract(work.get("abstract_inverted_index"))
+            abstract = decode_openalex_abstract(work.get("abstract_inverted_index"))
 
             if not abstract:
                 continue
@@ -109,7 +117,10 @@ def get_papers():
     print(f"Fetched {len(all_papers)} valid papers")
     return all_papers
 
-def fetch_nsf_sbir():
+def fetch_nsf_sbir_awards():
+    if not ENABLE_NSF_SBIR:
+        print("NSF SBIR: disabled (ENABLE_NSF_SBIR=False)")
+        return []
     print("Fetching NSF SBIR grants...")
     url = "http://api.nsf.gov/services/v1/awards.json"
     one_month_ago = (datetime.now() - timedelta(days=NSF_DAYS_BACK)).strftime("%m/%d/%Y")
@@ -172,7 +183,78 @@ def fetch_nsf_sbir():
     print(f"Fetched {len(companies)} relevant NSF SBIR grants")
     return companies
 
+def fetch_sbir_gov():
+    if not ENABLE_SBIR_GOV:
+        print("SBIR.gov: disabled (ENABLE_SBIR_GOV=False)")
+        return []
+    print("Fetching SBIR.gov awards...")
+
+    # NOTE: sbir.gov API has been offline intermittently.
+    # Set ENABLE_SBIR_GOV=True in config.py when the API is restored.
+    # Docs: https://www.sbir.gov/sites/default/files/sbir_gov_api_documentation_v3.pdf
+    url = "https://api.sbir.gov/public/api/awards"
+    cutoff_year = (datetime.now() - timedelta(days=SBIR_GOV_DAYS_BACK)).year
+    companies = []
+    seen_ids = set()
+
+    for keyword in SBIR_GOV_FILTER_KEYWORDS:
+        params = {
+            "keyword": keyword,
+            "award_year": cutoff_year,
+            "rows": 25,
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+        except Exception as e:
+            print(f"SBIR.gov '{keyword}': request failed — {e}")
+            continue
+
+        awards = data if isinstance(data, list) else data.get("data", [])
+        print(f"SBIR.gov '{keyword}': {len(awards)} awards returned")
+
+        for award in awards:
+            award_id = f"sbir_{award.get('award_number') or award.get('id')}"
+            if award_id in seen_ids:
+                continue
+            seen_ids.add(award_id)
+
+            abstract = award.get("abstract", "") or ""
+            title = award.get("title", "") or award.get("project_title", "") or ""
+
+            if len(abstract.split()) < 50:
+                continue
+
+            content = (title + " " + abstract).lower()
+            if not any(kw in content for kw in SBIR_GOV_FILTER_KEYWORDS):
+                continue
+
+            companies.append({
+                "paper_id": award_id,
+                "title": title,
+                "authors": award.get("pi_name", ""),
+                "institutions": award.get("firm", "") or award.get("company", ""),
+                "abstract": abstract,
+                "publication_date": award.get("award_date", "") or str(award.get("award_year", "")),
+                "citation_count": 0,
+                "source_url": award.get("solicitation_url", "") or f"https://www.sbir.gov/sbirsearch/detail/{award.get('award_number', '')}",
+                "search_term": "SBIR.gov",
+                "source": "SBIR.gov",
+                "pi_email": award.get("pi_email", ""),
+                "award_amount": award.get("award_amount", ""),
+                "company_city": award.get("city", ""),
+                "company_state": award.get("state_code", ""),
+                "agency": award.get("agency", ""),
+                "phase": award.get("phase", ""),
+            })
+
+    print(f"Fetched {len(companies)} relevant SBIR.gov awards")
+    return companies
+
+
 if __name__ == "__main__":
-    papers = get_papers()
+    papers = fetch_openalex_papers()
     if papers:
         print(json.dumps(papers[0], indent=2))
