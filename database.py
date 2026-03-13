@@ -33,6 +33,16 @@ def upsert_leads(leads):
             "company_phone": lead.get("company_phone"),
             "grant_type": lead.get("grant_type"),
             "fund_program_name": lead.get("fund_program_name"),
+            "agency": lead.get("agency"),
+            "branch": lead.get("branch"),
+            "company_url": lead.get("company_url"),
+            "poc_name": lead.get("poc_name"),
+            "poc_email": lead.get("poc_email"),
+            "poc_phone": lead.get("poc_phone"),
+            "number_employees": lead.get("number_employees"),
+            "topic_code": lead.get("topic_code"),
+            "uei": lead.get("uei"),
+            "ri_name": lead.get("ri_name"),
             "relevance_score": lead.get("relevance_score"),
             "why_this_matters": lead.get("why_this_matters"),
         }
@@ -41,6 +51,11 @@ def upsert_leads(leads):
     result = client.table("items").upsert(rows, on_conflict="paper_id").execute()
     print(f"Upserted {len(rows)} leads to Supabase")
     return result
+
+
+def fetch_existing_ids():
+    result = client.table("items").select("paper_id").execute()
+    return {row["paper_id"] for row in result.data}
 
 
 def fetch_leads(min_score=None, status=None, source=None):

@@ -1,5 +1,6 @@
 import anthropic
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import ANTHROPIC_API_KEY, OPEN_ALEX_PROMPT, NSF_PROMPT, SBIR_GOV_PROMPT
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -54,23 +55,24 @@ def score_item(item):
     return {
         **item,
         "relevance_score": result["relevance_score"],
-        "why_this_matters": result["why_this_matters"]
+        "why_this_matters": result["why_this_matters"],
     }
 
 
-def score_items(items):
-    print(f"Scoring {len(items)} items with Claude...")
+def score_items(items, max_workers=10):
+    if not items:
+        return []
+    print(f"Scoring {len(items)} items with Claude (up to {max_workers} concurrent)...")
 
     scored = []
-
-    for i, item in enumerate(items):
-        print(f"  Scoring {i+1}/{len(items)}: {item['title'][:60]}...")
-        try:
-            scored_item = score_item(item)
-            scored.append(scored_item)
-        except Exception as e:
-            print(f"  Error scoring item: {e}")
-            continue
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(score_item, item): item for item in items}
+        for future in as_completed(futures):
+            item = futures[future]
+            try:
+                scored.append(future.result())
+            except Exception as e:
+                print(f"  Error scoring '{item.get('title', '')[:60]}': {e}")
 
     print(f"Successfully scored {len(scored)} items")
     return scored

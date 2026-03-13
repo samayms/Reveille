@@ -1,0 +1,5 @@
+anthropic
+supabase
+requests
+streamlit
+pandas

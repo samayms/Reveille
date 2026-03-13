@@ -1,6 +1,11 @@
 import requests
 import json
+import re
 from datetime import datetime, timedelta
+
+
+def _strip_html(text):
+    return re.sub(r'<[^>]+>', '', text or '').strip()
 from config import (
     SEARCH_TERMS,
     RESULTS_PER_SEARCH,
@@ -54,7 +59,7 @@ def fetch_openalex_papers():
 
         for work in data.get("results", []):
             paper_id = f"oa_{work.get('id')}"
-            title = work.get("title", "") or ""
+            title = _strip_html(work.get("title", "") or "")
             if title in seen_titles:
                 continue
             seen_titles.add(title)
@@ -151,7 +156,7 @@ def fetch_nsf_sbir_awards():
                 seen_ids.add(award_id)
 
                 abstract = award.get("abstractText", "") or ""
-                title = award.get("title", "") or ""
+                title = _strip_html(award.get("title", "") or "")
 
                 content = (title + " " + abstract).lower()
                 if not any(kw in content for kw in NSF_FILTER_KEYWORDS):
@@ -244,7 +249,7 @@ def fetch_sbir_gov():
                     seen_contracts.add(contract)
 
                     abstract = award.get("abstract", "") or ""
-                    title = award.get("award_title", "") or ""
+                    title = _strip_html(award.get("award_title", "") or "")
 
                     if len(abstract.split()) < 100:
                         continue
@@ -277,6 +282,7 @@ def fetch_sbir_gov():
                         "search_term": "SBIR.gov",
                         "keywords": award.get("research_area_keywords", ""),
                         "pi_email": award.get("pi_email", ""),
+                        "poc_name": award.get("poc_name", ""),
                         "poc_email": award.get("poc_email", ""),
                         "poc_phone": award.get("poc_phone", ""),
                         "award_amount": award.get("award_amount", ""),
@@ -288,6 +294,9 @@ def fetch_sbir_gov():
                         "agency": award.get("agency", ""),
                         "branch": award.get("branch", ""),
                         "number_employees": award.get("number_employees", ""),
+                        "topic_code": award.get("topic_code", ""),
+                        "uei": award.get("uei", ""),
+                        "ri_name": award.get("ri_name", "") if "STTR" in fn else "",
                     })
 
                 # Stop paginating when we've received the last page
