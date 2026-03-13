@@ -51,6 +51,8 @@ Early-stage VC deal sourcing relies on conferences, referrals, and manually read
 
 Built for [Reveille VC](https://www.reveillevc.com), a NYC-based $25M debut fund investing in defense and energy. Configurable for any fund thesis via `config.py` without touching pipeline code.
 
+**Live app:** [reveille-deal-scout.streamlit.app](https://reveille-deal-scout.streamlit.app)
+
 **Features:**
 - Two live data sources: academic papers (OpenAlex) and federally funded startups (NSF SBIR)
 - 90%+ estimated reduction in LLM calls via rule-based keyword and abstract validation before scoring
@@ -175,6 +177,9 @@ High signal (7+): 3
 ```bash
 streamlit run app.py
 ```
+
+**Live deployment:**  
+[https://reveille-deal-scout.streamlit.app](https://reveille-deal-scout.streamlit.app)
 
 ---
 
