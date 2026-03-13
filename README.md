@@ -202,4 +202,4 @@ MIT © 2026 Samay Shah
 
 **Samay Shah**: CS, University of Michigan
 
-[samayms@umich.edu](mailto:samayms@umich.edu) | [github.com/samayms](https://github.com/samayms) | [LinkedIn](https://linkedin.com/in/samayshah)
+[samayms@umich.edu](mailto:samayms@umich.edu) | [github.com/samayms](https://github.com/samayms) | [LinkedIn](https://www.linkedin.com/in/samay-shah-19a4911b0/)
