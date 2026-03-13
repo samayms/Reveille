@@ -9,7 +9,7 @@ def run_pipeline():
     print("Fetch pipeline starting...")
 
     existing_ids = fetch_existing_ids()
-    print(f"Found {len(existing_ids)} existing records in database — skipping these.")
+    print(f"Skipping {len(existing_ids)} existing records in database")
 
     # Fetch all enabled sources in parallel
     fetch_tasks = {}

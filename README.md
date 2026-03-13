@@ -8,57 +8,56 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                           main.py                                │
-│               Parallel fetch + score + persist                   │
-└─────────────────────────────┬────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                          ingest.py                               │
-│                                                                  │
-│   ┌─────────────────────────┐   ┌─────────────────────────────┐  │
-│   │      OpenAlex API       │   │    NSF SBIR Grants API      │  │
-│   │    Academic Papers      │   │      Funded Startups        │  │
-│   │      7-day window       │   │      180-day window         │  │
-│   └─────────────────────────┘   └─────────────────────────────┘  │
-└─────────────────────────────┬────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                           score.py                               │
-│     Claude Haiku — 1-10 relevance score + investment rationale   │
-└─────────────────────────────┬────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                          database.py                             │
-│     Supabase PostgreSQL — upsert on paper_id, no duplicates      │
-└─────────────────────────────┬────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                           app.py                                 │
-│ Signal Brief │ All Leads │ Research Signals │ Funded Companies │  │
-│                     Federal Grants                               │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                    main.py                                       │
+│                         Parallel fetch + score + persist                         │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                   ingest.py                                      │
+│                                                                                  │
+│            ┌─────────────────────────┐   ┌─────────────────────────────┐         │
+│            │      OpenAlex API       │   │    NSF SBIR Grants API      │         │
+│            │    Academic Papers      │   │      Funded Startups        │         │
+│            │      7-day window       │   │      180-day window         │         │
+│            └─────────────────────────┘   └─────────────────────────────┘         │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                   score.py                                       │
+│            Claude Haiku — 1-10 relevance score + investment rationale            │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                  database.py                                     │
+│            Supabase PostgreSQL: upsert on paper_id, no duplicates                │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                    app.py                                        │
+│  Signal Brief │ All Leads │ Research Signals │ Funded Companies │ Federal Grants │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Overview
 
-Early-stage VC deal sourcing relies on conferences, referrals, and manually reading publications — slow, network-biased, and impossible to scale. This pipeline automates the entire process, giving a small fund the sourcing capacity of a team ten times its size.
+Early-stage VC deal sourcing relies on conferences, referrals, and manually reading publications which is slow, network-biased, and impossible to scale. This pipeline automates the entire process, giving a small fund the sourcing capacity of a team ten times its size.
 
-Built for [Reveille VC](https://www.reveillevc.com) — a NYC-based $25M debut fund investing in defense and energy. Configurable for any fund thesis via `config.py` without touching pipeline code.
+Built for [Reveille VC](https://www.reveillevc.com), a NYC-based $25M debut fund investing in defense and energy. Configurable for any fund thesis via `config.py` without touching pipeline code.
 
 **Features:**
-- Two live data sources — academic papers (OpenAlex) and federally funded startups (NSF SBIR)
+- Two live data sources: academic papers (OpenAlex) and federally funded startups (NSF SBIR)
 - 90%+ estimated reduction in LLM calls via rule-based keyword and abstract validation before scoring
-- Claude Haiku scores each record against a configurable fund thesis with a 1–10 score and 2–3 sentence rationale
-- Upsert-on-conflict persistence — safe to run daily without creating duplicates
+- Claude Haiku scores each record against a configurable fund thesis with a 1-10 score and 2-3 sentence rationale
+- Upsert-on-conflict persistence; safe to run daily without creating duplicates
 - Five-tab Streamlit dashboard with lead status management and pipeline refresh
-- SBIR.gov integration implemented and ready — enable by setting `ENABLE_SBIR_GOV=True` in `config.py` once the program API is restored
+- SBIR.gov integration implemented and ready; enable by setting `ENABLE_SBIR_GOV=True` in `config.py` once the program API is restored
 
 ---
 
@@ -84,9 +83,9 @@ reveille-scout/
 
 | Source | Status | Lookback | Best For |
 |--------|--------|----------|----------|
-| OpenAlex | ✅ Active | 7 days | Research signals, authors to contact |
-| NSF SBIR Grants | ✅ Active | 180 days | Fundable companies with PI email + award amount |
-| SBIR.gov | ⏸️ Disabled | Current + prior year pagination | DOD/DOE funded startups (March 2026) |
+| OpenAlex | Active | 7 days | Research signals, authors to contact |
+| NSF SBIR Grants | Active | 180 days | Fundable companies with PI email + award amount |
+| SBIR.gov | Disabled | Current + prior year pagination | DOD/DOE funded startups (March 2026) |
 
 ---
 
@@ -113,7 +112,7 @@ Create a Supabase project, create the `items` table used by `database.py`, then 
 
 ## Configuration
 
-Credentials live in `.env` (gitignored). Pipeline behavior is controlled from `config.py` — change search terms, thesis, and lookback windows to redeploy for any fund.
+Credentials live in `.env` (gitignored). Pipeline behavior is controlled from `config.py`. There, change search terms, thesis, and lookback windows to redeploy for any fund.
 
 **`.env`**
 
@@ -131,7 +130,7 @@ Credentials live in `.env` (gitignored). Pipeline behavior is controlled from `c
 | `ENABLE_OPENALEX` | bool | Toggle OpenAlex ingestion |
 | `ENABLE_NSF_SBIR` | bool | Toggle NSF SBIR/STTR ingestion |
 | `ENABLE_SBIR_GOV` | bool | Toggle SBIR.gov ingestion |
-| `SEARCH_TERMS` | list[list[str]] | OpenAlex terms — inner list AND-joined, outer list OR-joined |
+| `SEARCH_TERMS` | list[list[str]] | OpenAlex terms; inner list AND-joined, outer list OR-joined |
 | `NSF_FILTER_KEYWORDS` | list[str] | Keywords validated against NSF abstracts post-fetch |
 | `OPEN_ALEX_DAYS_BACK` | int | OpenAlex lookback window (default: 7) |
 | `NSF_DAYS_BACK` | int | NSF SBIR lookback window (default: 180) |
@@ -187,6 +186,6 @@ MIT © 2026 Samay Shah
 
 ## Author
 
-**Samay Shah** — CS, University of Michigan
+**Samay Shah**: CS, University of Michigan
 
-[samayms@umich.edu](mailto:samayms@umich.edu) · [github.com/samayms](https://github.com/samayms) · [LinkedIn](https://linkedin.com/in/samayshah)
+[samayms@umich.edu](mailto:samayms@umich.edu) | [github.com/samayms](https://github.com/samayms) | [LinkedIn](https://linkedin.com/in/samayshah)
